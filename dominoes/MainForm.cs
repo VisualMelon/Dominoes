@@ -220,7 +220,7 @@ namespace dominoes
 			{
 				return
 				// fallen
-				(k=='W'?W:k=='E'?E:k=='D'?D:k=='C'?C:k=='X'?X:k=='Z'?Z:k=='A'?A:k=='Q'?Q:
+				(k=='#'?-1:k=='W'?W:k=='E'?E:k=='D'?D:k=='C'?C:k=='X'?X:k=='Z'?Z:k=='A'?A:k=='Q'?Q:
 				// dominos
 				k==' '?0:k=='-'?Y:k=='/'?N:k=='|'?U:B // ASCII, order for >
 				)*(k>64&k<91?1:257);
