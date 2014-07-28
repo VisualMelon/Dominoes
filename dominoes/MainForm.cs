@@ -35,25 +35,39 @@ namespace dominoes
 			// recognise this?
 			private int t=-1,f=-1,k,u,i=-1,j,J,K,o,O,b;
 			
+			private int oi;
 			private int[,]T;
+			
+			private int[,] cloneT()
+			{ // ... I think Arrays have a clone method...
+				f=T.GetLength(0); // no this shouldn't be here
+				t=T.GetLength(1);
+				var nt = new int[f,t];
+					
+				for(i=0;i<f;i++) // values of i and j don't matter, just counters
+				{
+					for(j=0;j<t;j++) // increment done 3down
+					{
+						nt[i,j] = T[i,j];
+					}
+				}
+				
+				return nt;
+			}
 			
 			public void store()
 			{
 				lock (lck)
 				{
+					if (old.Count > 2 && oi < old.Count - 1)
+						old.RemoveRange(oi + 1, old.Count - oi - 2);
 					if (old.Count > 64)
 						old.RemoveAt(0);
 						
-					var nt = new int[f,t];
+					var nt = cloneT();
 					old.Add(nt);
 					
-					for(i=0;i<f;i++) // values of i and j don't matter, just counters
-					{
-						for(j=0;j<t;j++) // increment done 3down
-						{
-							nt[i,j] = T[i,j];
-						}
-					}
+					oi = old.Count;
 				}
 			}
 			
@@ -61,13 +75,27 @@ namespace dominoes
 			{
 				lock (lck)
 				{
-					if (old.Count > 0)
+					if (old.Count > 0 && oi > 0)
 					{
-						int idx = old.Count - 1;
-						T = old[idx];
-						old.RemoveAt(idx);
-						f=T.GetLength(0);
-						t=T.GetLength(1);
+						if (oi == old.Count)
+							old.Add(T);
+						oi--;
+						T = old[oi];
+						T = cloneT();
+					}
+				}
+			}
+			
+			// these names
+			public void unrevert()
+			{
+				lock (lck)
+				{
+					if (old.Count > 2 && oi < old.Count - 1)
+					{
+						oi++;
+						T = old[oi];
+						T = cloneT();
 					}
 				}
 			}
@@ -411,21 +439,38 @@ namespace dominoes
 			return new Point(x, y);
 		}
 		
-		void updateSelF()
+		void updateLabels()
 		{
 			if (mouseMode == "point")
 			{
 				selF.Text = "Cursor at " + cmp.X + ", " + cmp.Y;
+				mouseF.Text = "Point Mode";
 			}
 			else if (mouseMode == "box")
 			{
 				selF.Text = "Selection " + Math.Min(cmp.X, lmp.X) + ", " + Math.Min(cmp.Y, lmp.Y) + ", " + (Math.Abs(cmp.X - lmp.X) + 1) + ", " + (Math.Abs(cmp.Y - lmp.Y) + 1);
+				mouseF.Text = "Box Mode";
+			}
+			if (f5)
+			{
+				runF.Text = "Running";
+			}
+			else
+			{
+				runF.Text = "";
 			}
 			selF.Invalidate();
+			mouseF.Invalidate();
 		}
 		
 		void ViewFMouseDown(object sender, MouseEventArgs e)
 		{
+			if (prevs.Count > 0)
+			{
+				prevs.Clear();
+				lay.store();
+			}
+			
 			mouseDown = e.Button == MouseButtons.Left ? 1 : e.Button == MouseButtons.Right ? 2 : 3;
 
 			if (mouseDown != 3)
@@ -435,14 +480,13 @@ namespace dominoes
 			
 			mmp = (mdp = e.Location);
 			
-			updateSelF();
+			updateLabels();
 			viewF.Invalidate();
 		}
 		
 		void ViewFMouseUp(object sender, MouseEventArgs e)
 		{
 			mouseDown = 0;
-			prevs.Clear();
 			
 			viewF.Invalidate();
 		}
@@ -569,7 +613,7 @@ namespace dominoes
 				{
 				}
 			
-				updateSelF();
+				updateLabels();
 			}
 			
 			mmp = e.Location;
@@ -665,118 +709,159 @@ namespace dominoes
 		
 		int[,] cpy;
 		
+		void copy()
+		{
+			if (mouseMode == "box")
+			{
+				cpy = new int[Math.Abs(cmp.X - lmp.X) + 1, Math.Abs(cmp.Y - lmp.Y) + 1];
+				int sx = Math.Min(cmp.X, lmp.X);
+				int sy = Math.Min(cmp.Y, lmp.Y);
+				for (int i = 0; i < Math.Abs(cmp.X - lmp.X) + 1; i++)
+				{
+					for (int j = 0; j < Math.Abs(cmp.Y - lmp.Y) + 1; j++)
+					{
+						cpy[i, j] = lay[i + sx, j + sy];
+					}
+				}
+			}
+		}
+		
+		void paste()
+		{
+			if (mouseMode == "box" && cpy != null)
+			{
+				ensuremp();
+				int sx = Math.Min(cmp.X, lmp.X);
+				int sy = Math.Min(cmp.Y, lmp.Y);
+				for (int i = 0; i < Math.Min(Math.Abs(cmp.X - lmp.X) + 1, cpy.GetLength(0)); i++)
+				{
+					for (int j = 0; j < Math.Min(Math.Abs(cmp.Y - lmp.Y) + 1, cpy.GetLength(1)); j++)
+					{
+						lay[i + sx, j + sy] = cpy[i, j];
+					}
+				}
+			}
+		}
+		
 		void ViewFKeyDown(object sender, KeyEventArgs e)
 		{
-			switch (e.KeyCode)
+			if (e.Control == false)
 			{
-				case Keys.Left:
-					cmp.X--;
-					lmp.X--;
-					break;
-				case Keys.Right:
-					cmp.X++;
-					lmp.X++;
-					break;
-				case Keys.Up:
-					cmp.Y--;
-					lmp.Y--;
-					break;
-				case Keys.Down:
-					cmp.Y++;
-					lmp.Y++;
-					break;
-					
-				case Keys.W:
-					setness(0, -1, e.Shift);
-					break;
-				case Keys.E:
-					setness(1, -1, e.Shift);
-					break;
-				case Keys.D:
-					setness(1, 0, e.Shift);
-					break;
-				case Keys.C:
-					setness(1, 1, e.Shift);
-					break;
-				case Keys.X:
-					setness(0, 1, e.Shift);
-					break;
-				case Keys.Z:
-					setness(-1, 1, e.Shift);
-					break;
-				case Keys.A:
-					setness(-1, 0, e.Shift);
-					break;
-				case Keys.Q:
-					setness(-1, -1, e.Shift);
-					break;
-				case Keys.S:
-					setness(-1);
-					break;
-				case Keys.Space:
-					setness(0);
-					break;
-					
-				case Keys.M:
-					movewith = !movewith;
-					break;
-				case Keys.T:
-					twoWayFreeForm = !twoWayFreeForm;
-					break;
-				case Keys.P:
-					mouseMode = "point";
-					updateSelF();
-					break;
-				case Keys.B:
-					mouseMode = "box";
-					updateSelF();
-					break;
-				case Keys.Y:
-					if (mouseMode == "box")
-					{
-						cpy = new int[Math.Abs(cmp.X - lmp.X) + 1, Math.Abs(cmp.Y - lmp.Y) + 1];
-						int sx = Math.Min(cmp.X, lmp.X);
-						int sy = Math.Min(cmp.Y, lmp.Y);
-						for (int i = 0; i < Math.Abs(cmp.X - lmp.X) + 1; i++)
-						{
-							for (int j = 0; j < Math.Abs(cmp.Y - lmp.Y) + 1; j++)
-							{
-								cpy[i, j] = lay[i + sx, j + sy];
-							}
-						}
-					}
-					break;
-				case Keys.U:
-					if (mouseMode == "box" && cpy != null)
-					{
-						ensuremp();
-						int sx = Math.Min(cmp.X, lmp.X);
-						int sy = Math.Min(cmp.Y, lmp.Y);
-						for (int i = 0; i < Math.Min(Math.Abs(cmp.X - lmp.X) + 1, cpy.GetLength(0)); i++)
-						{
-							for (int j = 0; j < Math.Min(Math.Abs(cmp.Y - lmp.Y) + 1, cpy.GetLength(1)); j++)
-							{
-								lay[i + sx, j + sy] = cpy[i, j];
-							}
-						}
-					}
-					break;
-				case Keys.Escape:
-					cpy = null;
-					break;
-				case Keys.Back:
-					lay.revert();
-					break;
-					
-				case Keys.F5:
-					lay.store();
-					f5 = !f5;
-					break;
-				case Keys.F6:
-					lay.store();
-					lay.iter();
-					viewF.Invalidate();
-					break;
+				switch (e.KeyCode)
+				{
+					case Keys.Left:
+						cmp.X--;
+						lmp.X--;
+						break;
+					case Keys.Right:
+						cmp.X++;
+						lmp.X++;
+						break;
+					case Keys.Up:
+						cmp.Y--;
+						lmp.Y--;
+						break;
+					case Keys.Down:
+						cmp.Y++;
+						lmp.Y++;
+						break;
+						
+					case Keys.W:
+						setness(0, -1, e.Shift);
+						break;
+					case Keys.E:
+						setness(1, -1, e.Shift);
+						break;
+					case Keys.D:
+						setness(1, 0, e.Shift);
+						break;
+					case Keys.C:
+						setness(1, 1, e.Shift);
+						break;
+					case Keys.X:
+						setness(0, 1, e.Shift);
+						break;
+					case Keys.Z:
+						setness(-1, 1, e.Shift);
+						break;
+					case Keys.A:
+						setness(-1, 0, e.Shift);
+						break;
+					case Keys.Q:
+						setness(-1, -1, e.Shift);
+						break;
+					case Keys.S:
+						setness(-1);
+						break;
+					case Keys.Space:
+						setness(0);
+						break;
+						
+					case Keys.M:
+						movewith = !movewith;
+						break;
+					case Keys.T:
+						twoWayFreeForm = !twoWayFreeForm;
+						break;
+					case Keys.P:
+						mouseMode = "point";
+						updateLabels();
+						break;
+					case Keys.B:
+						mouseMode = "box";
+						updateLabels();
+						break;
+					case Keys.Y:
+						copy();
+						break;
+					case Keys.U:
+						paste();
+						break;
+					case Keys.Escape:
+						cpy = null;
+						break;
+					case Keys.Back:
+					case Keys.PageDown:
+						lay.revert();
+						break;
+					case Keys.PageUp:
+						lay.revert();
+						break;
+						
+					case Keys.F5:
+						lay.store();
+						f5 = !f5;
+						updateLabels();
+						break;
+					case Keys.F6:
+						lay.store();
+						lay.iter();
+						viewF.Invalidate();
+						break;
+				}
+			}
+			else
+			{ // control
+				switch (e.KeyCode)
+				{
+					case Keys.X:
+						copy();
+						if (mouseMode == "box") // might want to revise this
+							setness(0);
+						break;
+					case Keys.C:
+						copy();
+						break;
+					case Keys.V:
+						paste();
+						break;
+					case Keys.Z:
+						lay.revert();
+						break;
+					case Keys.Y:
+						lay.unrevert();
+						break;
+				}
 			}
 			
 			viewF.Invalidate();
@@ -805,7 +890,10 @@ namespace dominoes
 				goto wait;
 			
 			if (runiters(itrs) == false)
+			{
 				f5 = false;
+				this.Invoke(new Action(updateLabels));
+			}
 			
 			this.Invoke(new Action(viewF.Invalidate));
 			
@@ -841,6 +929,7 @@ namespace dominoes
 			lay.readin(new System.IO.StringReader("1 1  "));
 			viewF.Invalidate();
 			txt.Text = "1 1  ";
+			updateLabels();
 			new Action(fiver).BeginInvoke(null, null);
 		}
 		

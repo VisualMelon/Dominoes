@@ -37,6 +37,9 @@ namespace dominoes
 		private void InitializeComponent()
 		{
 			this.topPanel = new System.Windows.Forms.Panel();
+			this.runF = new System.Windows.Forms.Label();
+			this.mouseF = new System.Windows.Forms.Label();
+			this.trimBtn = new System.Windows.Forms.Button();
 			this.clearBtn = new System.Windows.Forms.Button();
 			this.selF = new System.Windows.Forms.Label();
 			this.writeBtn = new System.Windows.Forms.Button();
@@ -44,13 +47,14 @@ namespace dominoes
 			this.readBtn = new System.Windows.Forms.Button();
 			this.txt = new System.Windows.Forms.TextBox();
 			this.viewF = new dominoes.PictureView();
-			this.trimBtn = new System.Windows.Forms.Button();
 			this.topPanel.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.viewF)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// topPanel
 			// 
+			this.topPanel.Controls.Add(this.runF);
+			this.topPanel.Controls.Add(this.mouseF);
 			this.topPanel.Controls.Add(this.trimBtn);
 			this.topPanel.Controls.Add(this.clearBtn);
 			this.topPanel.Controls.Add(this.selF);
@@ -64,9 +68,35 @@ namespace dominoes
 			this.topPanel.Size = new System.Drawing.Size(566, 96);
 			this.topPanel.TabIndex = 0;
 			// 
+			// runF
+			// 
+			this.runF.Location = new System.Drawing.Point(174, 69);
+			this.runF.Name = "runF";
+			this.runF.Size = new System.Drawing.Size(144, 23);
+			this.runF.TabIndex = 8;
+			this.runF.Text = "runF";
+			// 
+			// mouseF
+			// 
+			this.mouseF.Location = new System.Drawing.Point(174, 43);
+			this.mouseF.Name = "mouseF";
+			this.mouseF.Size = new System.Drawing.Size(144, 23);
+			this.mouseF.TabIndex = 7;
+			this.mouseF.Text = "mouseF";
+			// 
+			// trimBtn
+			// 
+			this.trimBtn.Location = new System.Drawing.Point(93, 38);
+			this.trimBtn.Name = "trimBtn";
+			this.trimBtn.Size = new System.Drawing.Size(75, 23);
+			this.trimBtn.TabIndex = 6;
+			this.trimBtn.Text = "Trim";
+			this.trimBtn.UseVisualStyleBackColor = true;
+			this.trimBtn.Click += new System.EventHandler(this.TrimBtnClick);
+			// 
 			// clearBtn
 			// 
-			this.clearBtn.Location = new System.Drawing.Point(126, 64);
+			this.clearBtn.Location = new System.Drawing.Point(93, 64);
 			this.clearBtn.Name = "clearBtn";
 			this.clearBtn.Size = new System.Drawing.Size(75, 23);
 			this.clearBtn.TabIndex = 5;
@@ -76,10 +106,11 @@ namespace dominoes
 			// 
 			// selF
 			// 
-			this.selF.Location = new System.Drawing.Point(103, 17);
+			this.selF.Location = new System.Drawing.Point(174, 17);
 			this.selF.Name = "selF";
-			this.selF.Size = new System.Drawing.Size(133, 23);
+			this.selF.Size = new System.Drawing.Size(144, 23);
 			this.selF.TabIndex = 4;
+			this.selF.Text = "selectionF";
 			// 
 			// writeBtn
 			// 
@@ -116,10 +147,10 @@ namespace dominoes
 			this.txt.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
 									| System.Windows.Forms.AnchorStyles.Left) 
 									| System.Windows.Forms.AnchorStyles.Right)));
-			this.txt.Location = new System.Drawing.Point(254, 3);
+			this.txt.Location = new System.Drawing.Point(324, 3);
 			this.txt.Multiline = true;
 			this.txt.Name = "txt";
-			this.txt.Size = new System.Drawing.Size(309, 90);
+			this.txt.Size = new System.Drawing.Size(239, 90);
 			this.txt.TabIndex = 0;
 			// 
 			// viewF
@@ -136,16 +167,6 @@ namespace dominoes
 			this.viewF.MouseUp += new System.Windows.Forms.MouseEventHandler(this.ViewFMouseUp);
 			this.viewF.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ViewFKeyDown);
 			// 
-			// trimBtn
-			// 
-			this.trimBtn.Location = new System.Drawing.Point(126, 38);
-			this.trimBtn.Name = "trimBtn";
-			this.trimBtn.Size = new System.Drawing.Size(75, 23);
-			this.trimBtn.TabIndex = 6;
-			this.trimBtn.Text = "Trim";
-			this.trimBtn.UseVisualStyleBackColor = true;
-			this.trimBtn.Click += new System.EventHandler(this.TrimBtnClick);
-			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -161,6 +182,8 @@ namespace dominoes
 			((System.ComponentModel.ISupportInitialize)(this.viewF)).EndInit();
 			this.ResumeLayout(false);
 		}
+		private System.Windows.Forms.Label runF;
+		private System.Windows.Forms.Label mouseF;
 		private System.Windows.Forms.Button clearBtn;
 		private System.Windows.Forms.Button trimBtn;
 		private System.Windows.Forms.Label selF;
