@@ -838,6 +838,14 @@ namespace dominoes
 						lay.iter();
 						viewF.Invalidate();
 						break;
+						
+					case Keys.F2:
+						if (slp > 1)
+							slp /= 2;
+						break;
+					case Keys.F3:
+						slp *= 2;
+						break;
 				}
 			}
 			else
@@ -881,7 +889,7 @@ namespace dominoes
 		}
 		
 		int itrs = 1;
-		int slp = 100;
+		int slp = 64;
 		bool f5 = false;
 		void fiver()
 		{
