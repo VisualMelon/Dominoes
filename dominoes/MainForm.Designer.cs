@@ -148,6 +148,7 @@ namespace dominoes
 									| System.Windows.Forms.AnchorStyles.Left) 
 									| System.Windows.Forms.AnchorStyles.Right)));
 			this.txt.Location = new System.Drawing.Point(324, 3);
+			this.txt.MaxLength = 32767000;
 			this.txt.Multiline = true;
 			this.txt.Name = "txt";
 			this.txt.Size = new System.Drawing.Size(239, 90);

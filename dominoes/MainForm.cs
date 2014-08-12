@@ -237,13 +237,16 @@ namespace dominoes
 							f=f*10+k-48;
 					
 					T=new int[f,t]; // main arr
-							
+					
 					// input
 					for(;++i<f;) // values of i and j don't matter, just counters
 					{
 						for(j=0;j<t;) // increment done 3down
 						{
+						again:
 							k=L.Read();
+							if (k<32)
+								goto again;
 							T[i,j++]=(toi(k));
 						}
 					}
@@ -491,46 +494,31 @@ namespace dominoes
 			viewF.Invalidate();
 		}
 		
-		void ViewFMouseMove(object sender, MouseEventArgs e)
+		void pointMove()
 		{
-			if (mouseDown == 0)
-				return;
-			
-			if (mouseDown == 3)
+			if (cmp != lmp)
 			{
-				// pan
-				ox -= e.X - mmp.X;
-				oy -= e.Y - mmp.Y;
-			}
-			else
-			{
-				cmp = mtrans(e.X, e.Y, out cmc);
-				
-				if (mouseMode == "point")
+				int r = geti(cmp.X - lmp.X, cmp.Y - lmp.Y, mouseDown == 2);
+					
+				if (prevs.Count > 0)
 				{
-					if (cmp != lmp)
+					Point p = prevs[prevs.Count - 1];
+					int rp = geti(cmp.X - p.X, cmp.Y - p.Y, mouseDown == 2);
+					if (rp != 0)
 					{
-						int r = geti(cmp.X - lmp.X, cmp.Y - lmp.Y, mouseDown == 2);
-							
-						if (prevs.Count > 0)
+						if (prevs.Count > 1)
 						{
-							Point p = prevs[prevs.Count - 1];
-							int rp = geti(cmp.X - p.X, cmp.Y - p.Y, mouseDown == 2);
-							if (rp != 0)
+							Point cp = prevs[prevs.Count - 2];
+							int rpc = geti(p.X - cp.X, p.Y - cp.Y, true);
+							
+							if ((rpc & rp) > 0 && !twoWayFreeForm)
 							{
-								if (prevs.Count > 1)
-								{
-									Point cp = prevs[prevs.Count - 2];
-									int rpc = geti(p.X - cp.X, p.Y - cp.Y, true);
-									
-									if ((rpc & rp) > 0 && !twoWayFreeForm)
-									{
-										r = rp;
-										lmp = p;
-										goto done;
-									}
-									else
-									{
+								r = rp;
+								lmp = p;
+								goto done;
+							}
+							else
+							{
 //										rp = geti(cmp.X - lmp.X, cmp.Y - lmp.Y, mouseDown == 2);
 //										rpc = geti(lmp.X - p.X, lmp.Y - p.Y, true);
 //										
@@ -557,60 +545,107 @@ namespace dominoes
 //												}
 //											}
 //										}
-									}
-								}
-								
-								if (twoWayFreeForm)
-								{
-									rp = geti(cmp.X - lmp.X, cmp.Y - lmp.Y, mouseDown == 2);
-									int rpc = geti(lmp.X - p.X, lmp.Y - p.Y, true);
-									
-									if ((rp & rpc) > 0)
-									{
-										r = rp;
-									}
-									else
-									{
-										rp = geti(cmp.X - lmp.X, cmp.Y - lmp.Y, true);
-										
-										if ((rp & rpc) > 0)
-										{
-											r = (rp & rpc);
-											if (mouseDown == 2)
-											{
-												r = ((r >> 4) + (r << 4)) & 255;
-												r = getPickup(r);
-											}
-											else
-											{
-												r = (r + (r >> 4) + (r << 4)) & 255;
-												r *= 257;
-											}
-										}
-									}
-								}
-								else if (!twoWayFreeForm)
-								{
-									r = rp;
-									lmp = p;
-								}
 							}
 						}
 						
-					done:
-						ensuremp();
-						lay[lmp.X, lmp.Y] = r;
-						
-						if (prevs.Count > 1)
-							prevs.RemoveRange(0, prevs.Count - 1);
-						prevs.Add(lmp);
-			
-						lmc = cmc;
-						lmp = cmp;
+						if (twoWayFreeForm)
+						{
+							rp = geti(cmp.X - lmp.X, cmp.Y - lmp.Y, mouseDown == 2);
+							int rpc = geti(lmp.X - p.X, lmp.Y - p.Y, true);
+							
+							if ((rp & rpc) > 0)
+							{
+								r = rp;
+							}
+							else
+							{
+								rp = geti(cmp.X - lmp.X, cmp.Y - lmp.Y, true);
+								
+								if ((rp & rpc) > 0)
+								{
+									r = (rp & rpc);
+									if (mouseDown == 2)
+									{
+										r = ((r >> 4) + (r << 4)) & 255;
+										r = getPickup(r);
+									}
+									else
+									{
+										r = (r + (r >> 4) + (r << 4)) & 255;
+										r *= 257;
+									}
+								}
+							}
+						}
+						else if (!twoWayFreeForm)
+						{
+							r = rp;
+							lmp = p;
+						}
 					}
+				}
+				
+			done:
+				ensuremp();
+				lay[lmp.X, lmp.Y] = r;
+				
+				if (prevs.Count > 1)
+					prevs.RemoveRange(0, prevs.Count - 1);
+				prevs.Add(lmp);
+			}
+		}
+		
+		void ViewFMouseMove(object sender, MouseEventArgs e)
+		{
+			if (mouseDown == 0)
+				return;
+			
+			if (mouseDown == 3)
+			{
+				// pan
+				ox -= e.X - mmp.X;
+				oy -= e.Y - mmp.Y;
+			}
+			else
+			{
+				cmp = mtrans(e.X, e.Y, out cmc);
+				
+				if (mouseMode == "point")
+				{
+					int sx = lmp.X * cx + cx / 2 - ox;
+					int sy = lmp.Y * cy + cy / 2 - oy;
+					
+					int dx = e.X - sx;
+					int dy = e.Y - sy;
+					if (Math.Abs(dx) > cx || Math.Abs(dy) > cy)
+					{
+						float k = Math.Min(Math.Abs((float)cx / (float)dx), Math.Abs((float)cy / (float)dy));
+						
+						float ddx = (float)dx * k;
+						float ddy = (float)dy * k;
+						
+						int t = (int)(1.0f/k);
+						for (int i=1;i<=t;i++)
+						{
+							cmp = mtrans((int)(sx + ddx * (float)i), (int)(sy + ddy * (float)i), out cmc);
+							
+							if (cmp != lmp)
+							{
+								pointMove();
+							
+								lmc = cmc;
+								lmp = cmp;
+							}
+						}
+					}
+					
+					pointMove();
+					lmc = cmc;
+					lmp = cmp;
 				}
 				else if (mouseMode == "box")
 				{
+					cmp = mtrans(e.X, e.Y, out cmc);
 				}
 			
 				updateLabels();
