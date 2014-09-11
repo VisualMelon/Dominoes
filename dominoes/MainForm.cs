@@ -343,17 +343,22 @@ namespace dominoes
 				}
 			}
 			
-			public void draw(Graphics g)
+			public void draw(Graphics g, int vsx, int vsy, int vex, int vey)
 			{
+				if (vsx < 0) vsx = 0;
+				if (vex > t - 1) vex = t - 1;
+				if (vsy < 0) vsy = 0;
+				if (vey > f - 1) vey = f - 1;
+				
 				lock (lck)
 				{
 					if (T != null)
 					{
 						Font font1 = new System.Drawing.Font(System.Drawing.FontFamily.GenericMonospace, 0.8f, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
 						
-						for (j=0;j<f;j++) // careful!!
+						for (j=vsy;j<=vey;j++) // careful!!
 						{
-							for (k=0;k<t;k++) // careful!!
+							for (k=vsx;k<=vex;k++) // careful!!
 							{
 								g.DrawString(""+toc(T[j, k]), font1, Brushes.Black, k, j);
 							}
@@ -682,7 +687,7 @@ namespace dominoes
 				g.FillRectangle(Brushes.Red, Math.Min(cmp.X, lmp.X), Math.Min(cmp.Y, lmp.Y), Math.Abs(cmp.X - lmp.X) + 1, Math.Abs(cmp.Y - lmp.Y) + 1);
 			}
 			
-			lay.draw(g);
+			lay.draw(g, ox / cx, oy / cy, viewF.Width / cx + ox / cx + 1, viewF.Height / cy + oy / cy + 1);
 		}
 		
 		IEnumerable<Point> box

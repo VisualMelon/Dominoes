@@ -28,7 +28,8 @@ namespace dominoes
 //			KeyDown(e);
 //		}
 //		
-	    protected override void OnMouseDown(MouseEventArgs e) {
+	    protected override void OnMouseDown(MouseEventArgs e)
+	    {
 	        this.Focus();
 	        base.OnMouseDown(e);
 	    }
