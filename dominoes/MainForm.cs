@@ -343,7 +343,7 @@ namespace dominoes
 				}
 			}
 			
-			public void draw(Graphics g, int vsx, int vsy, int vex, int vey)
+			public void draw(Graphics g, int vsx, int vsy, int vex, int vey, int cx, int cy)
 			{
 				if (vsx < 0) vsx = 0;
 				if (vex > t - 1) vex = t - 1;
@@ -360,7 +360,19 @@ namespace dominoes
 						{
 							for (k=vsx;k<=vex;k++) // careful!!
 							{
-								g.DrawString(""+toc(T[j, k]), font1, Brushes.Black, k, j);
+								int cc = T[j, k];
+								if (cc != 0)
+								{
+									if (cx > 2)
+										g.DrawString(""+toc(T[j, k]), font1, Brushes.Black, k, j);
+									else
+									{
+										if (cc > p)
+											g.FillRectangle(System.Drawing.Brushes.Gray, k, j, 1, 1);
+										else
+											g.FillRectangle(System.Drawing.Brushes.White, k, j, 1, 1);
+									}
+								}
 							}
 						}
 					}
@@ -668,7 +680,10 @@ namespace dominoes
 			g.TranslateTransform(-ox, -oy);
 			g.ScaleTransform(cx, cy);
 			
-			g.Clear(Color.White);
+			if (cx > 2)
+				g.Clear(Color.White);
+			else
+				g.Clear(Color.Black);
 			
 			if (mouseMode == "point")
 		    {
@@ -687,7 +702,20 @@ namespace dominoes
 				g.FillRectangle(Brushes.Red, Math.Min(cmp.X, lmp.X), Math.Min(cmp.Y, lmp.Y), Math.Abs(cmp.X - lmp.X) + 1, Math.Abs(cmp.Y - lmp.Y) + 1);
 			}
 			
-			lay.draw(g, ox / cx, oy / cy, viewF.Width / cx + ox / cx + 1, viewF.Height / cy + oy / cy + 1);
+			lay.draw(g, ox / cx, oy / cy, viewF.Width / cx + ox / cx + 1, viewF.Height / cy + oy / cy + 1, cx, cy);
+		}
+		
+		void scaleNess(int ncx, int ncy)
+		{
+			float xs = ((float)ncx / (float)cx);
+			float ys = ((float)ncy / (float)cy);
+			
+			ox = (int)(((float)ox + (float)viewF.Width  / 2f) * xs - (float)viewF.Width  / 2f);
+			oy = (int)(((float)oy + (float)viewF.Height / 2f) * ys - (float)viewF.Height / 2f);
+			
+			cx = ncx;
+			cy = ncy;
+			viewF.Invalidate();
 		}
 		
 		IEnumerable<Point> box
@@ -855,6 +883,7 @@ namespace dominoes
 						copy();
 						break;
 					case Keys.U:
+						lay.store();
 						paste();
 						break;
 					case Keys.Escape:
@@ -886,6 +915,23 @@ namespace dominoes
 					case Keys.F3:
 						slp *= 2;
 						break;
+						
+					case Keys.F7:
+						if (cx == 8)
+							scaleNess(4, 7);
+						else if (cx == 4)
+							scaleNess(2, 3);
+						else if (cx == 2)
+							scaleNess(1, 1);
+						break;
+					case Keys.F8:
+						if (cx == 1)
+							scaleNess(2, 3);
+						else if (cx == 2)
+							scaleNess(4, 7);
+						else if (cx == 4)
+							scaleNess(8, 14);
+						break;
 				}
 			}
 			else
@@ -901,6 +947,7 @@ namespace dominoes
 						copy();
 						break;
 					case Keys.V:
+						lay.store();
 						paste();
 						break;
 					case Keys.Z:
